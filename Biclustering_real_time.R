@@ -1,7 +1,7 @@
 ################################################################
 ##### Real-Time Cheating Detection on Mixed-Format Tests #######
 ################ Using a Biclustering Approach #################
-############ Hyeryung Lee & Walter P. Vispoel (2024) ###########
+############ Hyeryung Lee & Walter P. Vispoel (2025) ###########
 ################################################################
 
 #### Library
@@ -39,7 +39,7 @@ return(qubiclust_d(x_d, c, o, f, k, type, P, C, verbose,
 
 #### Cheating detection using QUBIC
 res <- tryCatch(
-  qubic_no_disc(mat, P = T,  c = 0.8, k = 4, verbose = F), error = function(e) {NULL}
+  qubic_no_disc(mat, P = T,  c = 1, k = 4, verbose = F), error = function(e) {NULL}
 )
 if(length(res) > 0){
   biclusters <- list()
@@ -59,7 +59,13 @@ if(length(res) > 0){
   }
   # Calculate p-values for biclusters and filter by p < 0.01
   if (length(biclusters) > 0) {
-    p_mat <- matrix(NA, nrow = length(biclusters), ncol = 3)
+    p_mat <- matrix(NA, nrow = length(biclusters), ncol = 4)
+    
+    # Compute ability-based strata for examinees 
+    score_all <- table(which(resp_data==key_data, arr.ind=T)[,1])
+    breaks <- unique(quantile(score_all, seq(0, 1, 0.1)))
+    strata <- cut(score_all, breaks = breaks, include.lowest = T)
+    
     for (z in 1:length(biclusters)) {
       if (is.null(biclusters[[z]]) || 
           length(biclusters[[z]]$rows) == 0 || 
@@ -84,17 +90,30 @@ if(length(res) > 0){
         # Calculate the p-value using Binomial distribution
         p_value <- pbinom(observed_size - 1, size = N, prob = pattern_prob, lower.tail = F)
         p_mat[z,1] <- p_value
+        
+        # Ability-based filtering
+        strata_prop <- matrix(NA, nrow=length(unique(strata)), ncol=2)
+        strata_prop[,2] <- unique(strata)
+        for(st in unique(strata)){
+          matching_rows <- which(apply(resp_data[which(strata == st), colss], 1, function(x) identical(as.numeric(as.vector(x)), ori_pat)))
+          strata_prop[which(unique(strata)==st),1] <- length(matching_rows)/ length(which(strata==st))
+        }
+        rare_cases <- intersect(strata[rowss], unique(strata)[which(strata_prop[,1] < 0.1)])
+        p_mat[z, 4] <- rowss[which(strata[rowss] %in% rare_cases)] # Flag examinees meeting ability-based filtering criteria
+        if (length(p_mat[z, 4]) < 2) {
+          p_mat[z, 4] <- NA
+        }
       }
     }
     person <- integer()
-    signi <- which((p_mat[,1]) < 0.01) # Filter biclusters by p-value < 0.01
+    signi <- which((p_mat[,1]) < 0.05) # Filter biclusters by p-value < 0.05
     
-    # Collect the filtered biclusters
+    # Flag examinees from biclusters with p-value < 0.05
     for (c in signi) {
       person_current <- biclusters[[c]]$rows
       person <- union(person, person_current)
     }
   }
 }
-flagged_examinees <- unique(person) # Flag possible cheaters 
+flagged_examinees <- unique(c(person, unlist(p_mat[, 4]))) # Flag all possible cheaters  
 flagged_examinees
