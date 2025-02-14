@@ -112,7 +112,7 @@ if(length(res) > 0){
         }
         rare_cases <- intersect(strata[rowss], unique(strata)[which(strata_prop[,1] < 0.1)])
         p_mat[[z, 4]] <- rowss[which(strata[rowss] %in% rare_cases)] # Flag examinees meeting ability-based filtering criteria
-        if (length(p_mat[z, 4]) < 2) {
+        if (length(p_mat[[z, 4]]) < 2) {
           p_mat[[z, 4]] <- NA
         }
       }
