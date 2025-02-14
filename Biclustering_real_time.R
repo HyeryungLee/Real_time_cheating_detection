@@ -59,7 +59,7 @@ if(length(res) > 0){
   }
   # Calculate p-values for biclusters and filter by p < 0.01
   if (length(biclusters) > 0) {
-    p_mat <- matrix(NA, nrow = length(biclusters), ncol = 4)
+    p_mat <- matrix(list(), nrow = length(biclusters), ncol = 4)
     
     # Compute ability-based strata for examinees 
     score_all <- table(which(resp_data==key_data, arr.ind=T)[,1])
@@ -74,8 +74,8 @@ if(length(res) > 0){
       } else {
         rowss <- biclusters[[z]]$rows
         colss <- biclusters[[z]]$cols
-        p_mat[z, 2] <- length(colss)
-        p_mat[z, 3] <- length(rowss)
+        p_mat[[z, 2]] <- length(colss)
+        p_mat[[z, 3]]<- length(rowss)
         
         ori_pat <- apply(mat[rowss, colss], 2, Mode) # Pattern within a bicluster
         pattern <- rep(NA, ncol(mat))  
@@ -89,7 +89,7 @@ if(length(res) > 0){
         
         # Calculate the p-value using Binomial distribution
         p_value <- pbinom(observed_size - 1, size = N, prob = pattern_prob, lower.tail = F)
-        p_mat[z,1] <- p_value
+        p_mat[[z,1]] <- p_value
         
         # Ability-based filtering
         strata_prop <- matrix(NA, nrow=length(unique(strata)), ncol=2)
@@ -99,9 +99,9 @@ if(length(res) > 0){
           strata_prop[which(unique(strata)==st),1] <- length(matching_rows)/ length(which(strata==st))
         }
         rare_cases <- intersect(strata[rowss], unique(strata)[which(strata_prop[,1] < 0.1)])
-        p_mat[z, 4] <- rowss[which(strata[rowss] %in% rare_cases)] # Flag examinees meeting ability-based filtering criteria
+        p_mat[[z, 4]] <- rowss[which(strata[rowss] %in% rare_cases)] # Flag examinees meeting ability-based filtering criteria
         if (length(p_mat[z, 4]) < 2) {
-          p_mat[z, 4] <- NA
+          p_mat[[z, 4]] <- NA
         }
       }
     }
