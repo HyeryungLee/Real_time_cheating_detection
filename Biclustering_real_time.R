@@ -13,6 +13,31 @@ key_data # vector of answer key for each item
 resp_data # matrix of response answer data collected at a specific time point
 time_data # matrix of response time data collected at a specific time point
 
+time_point # a specific time point at which cheating detection is conducted 
+# Identify the last item where the cumulative response time remains within time_point
+find_column_N <- function(row) {
+  cumsum_row <- unlist(cumsum(replace(row, is.na(row), 0))) 
+  if (cumsum_row[1] > time_point) {  
+    return(0)  
+  }
+  max(which(cumsum_row <= time_point), na.rm = TRUE)  
+}
+max_column <- apply(time_data, 1, find_column_N) 
+
+
+
+
+find_column_N <- function(row) {
+  cumsum_row <- unlist(cumsum(replace(row, is.na(row), 0)))
+  if (cumsum_row[1] > time_point) {
+    return(0)
+  }
+  max(which(cumsum_row <= time_point), na.rm = TRUE)
+}
+max_column <- apply(time_data, 1, find_column_N)
+
+
+
 #### Input Matrix Generation 
 K <- ncol(time_data)
 N <- nrow(time_data)
@@ -82,7 +107,7 @@ if(length(res) > 0){
         pattern[colss] <- ori_pat
 
         column_probs <- sapply(colss, function(col) {
-          length(which(cur_resp[, col] == pattern[col]))/(length(which(K >= col)))/2
+          length(which(cur_resp[, col] == pattern[col]))/(length(which(max_column >= col)))/2
         })
         pattern_prob <- prod(c(column_probs), na.rm = T) # Probability of the same pattern
         observed_size <- length(rowss)
