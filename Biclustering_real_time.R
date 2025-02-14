@@ -82,7 +82,7 @@ if(length(res) > 0){
       if (is.null(biclusters[[z]]) || 
           length(biclusters[[z]]$rows) == 0 || 
           length(biclusters[[z]]$cols) == 0) {
-        p_mat[z,] <- NA
+        p_mat[[z,1]] <- NA
       } else {
         rowss <- biclusters[[z]]$rows
         colss <- biclusters[[z]]$cols
