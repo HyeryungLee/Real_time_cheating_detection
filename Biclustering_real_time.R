@@ -25,19 +25,6 @@ find_column_N <- function(row) {
 max_column <- apply(time_data, 1, find_column_N) 
 
 
-
-
-find_column_N <- function(row) {
-  cumsum_row <- unlist(cumsum(replace(row, is.na(row), 0)))
-  if (cumsum_row[1] > time_point) {
-    return(0)
-  }
-  max(which(cumsum_row <= time_point), na.rm = TRUE)
-}
-max_column <- apply(time_data, 1, find_column_N)
-
-
-
 #### Input Matrix Generation 
 K <- ncol(time_data)
 N <- nrow(time_data)
